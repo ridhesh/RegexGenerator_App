@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Regex Generator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">  <!-- Link to custom CSS -->
+</head>
+<body>
+<div class="container">
+    <h2 class="text-center">CSV Regex Generator</h2>
+    <form method="POST" enctype="multipart/form-data" action="/generate_regex" class="text-center">
+        <div class="form-group">
+            <label for="csv_file">Upload a CSV File:</label>
+            <input type="file" class="form-control-file mx-auto" id="csv_file" name="csv_file" accept=".csv" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Generate Regex</button>
+    </form>
+</div>
+</body>
+</html>

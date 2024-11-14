@@ -3,78 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Regex Engine Example</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-            width: 300px;
-        }
-        label {
-            margin: 10px 0 5px;
-        }
-        input, textarea {
-            padding: 5px;
-            margin-bottom: 10px;
-        }
-        button {
-            padding: 10px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+    <title>CSV Regex Generator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
-
-<h1>Regex Engine Interface</h1>
-
-<form id="regexForm">
-    <label for="regexPattern">Enter Regex Pattern (leave empty for dynamic generation):</label>
-    <input type="text" id="regexPattern" placeholder="e.g., ^[a-zA-Z0-9]+$">
-
-    <label for="testString">Enter Test String:</label>
-    <input type="text" id="testString" placeholder="e.g., test123">
-
-    <label for="csvFile">Upload CSV File:</label>
-    <input type="file" id="csvFile" accept=".csv">
-
-    <button type="submit">Submit</button>
-</form>
-
-<div id="result" style="margin-top: 20px;"></div>
-
-<script>
-    document.getElementById('regexForm').onsubmit = function(event) {
-        event.preventDefault();
-
-        const regexPattern = document.getElementById('regexPattern').value;
-        const testString = document.getElementById('testString').value;
-        const csvFile = document.getElementById('csvFile').files[0];
-
-        let resultMessage = 'You entered:\n';
-        resultMessage += `Regex Pattern: ${regexPattern}\n`;
-        resultMessage += `Test String: ${testString}\n`;
-
-        if (csvFile) {
-            resultMessage += `Uploaded CSV File: ${csvFile.name}`;
-        } else {
-            resultMessage += 'No CSV file uploaded.';
-        }
-
-        document.getElementById('result').innerText = resultMessage;
-
-        // Here you would typically call a function to handle the regex matching and CSV processing
-    };
-</script>
-
+<div class="container mt-5">
+    <h2>CSV Regex Generator</h2>
+    <form method="POST" enctype="multipart/form-data" action="/generate_regex">
+        <div class="form-group">
+            <label for="csv_file">Upload a CSV File:</label>
+            <input type="file" class="form-control-file" id="csv_file" name="csv_file" accept=".csv" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Generate Regex</button>
+    </form>
+</div>
 </body>
 </html>

@@ -1,0 +1,49 @@
+body {
+    background-color: #f8f9fa; /* Light gray background */
+    font-family: 'Arial', sans-serif; /* Change the default font */
+}
+
+.container {
+    max-width: 600px; /* Set a maximum width for the container */
+    margin-top: 100px; /* Margin from the top */
+    padding: 20px; /* Padding for the container */
+    background-color: #ffffff; /* White background for the content */
+    border-radius: 5px; /* Rounded corners */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+h2 {
+    color: #343a40; /* Dark color for the heading */
+}
+
+.btn-primary {
+    background-color: #007bff; /* Bootstrap primary color */
+    border-color: #007bff; /* Match the border color */
+}
+
+.btn-primary:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    border-color: #0056b3; /* Match the border color */
+}
+
+.text-center {
+    margin-bottom: 20px; /* Margin for centered elements */
+}
+
+table {
+    margin-top: 20px; /* Space above the table */
+}
+
+table th {
+    background-color: #007bff; /* Table headers blue */
+    color: #ffffff; /* White text */
+}
+
+.table {
+    border-radius: 5px; /* Rounded corners for the table */
+    overflow: hidden; /* Prevent overflow of child elements */
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #f2f2f2; /* Light gray for odd rows */
+}
