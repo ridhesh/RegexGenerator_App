@@ -1,8 +1,8 @@
-from flask import Flask, request, render_template, send_file
-import pandas as pd
 import re
-import tempfile
+import pandas as pd
 import logging
+from flask import Flask, request, render_template, send_file
+import tempfile
 from collections import defaultdict
 
 app = Flask(__name__)
@@ -19,7 +19,7 @@ def home():
 def generate_regex():
     """Handles the file upload and regex generation process."""
     file = request.files['csv_file']
-    
+
     if file and file.filename.endswith('.csv'):
         df = pd.read_csv(file)
         result_df = pd.DataFrame()
@@ -33,7 +33,7 @@ def generate_regex():
                 tokens = tokenize(value)  # Tokenize the entry
                 patterns = detect_patterns(tokens)  # Detect patterns based on tokens
                 regex = generate_regex_from_patterns(patterns)  # Create regex from patterns
-                
+
                 token_patterns.append(' '.join(tokens))
                 regex_patterns.append(regex)
 
@@ -45,75 +45,100 @@ def generate_regex():
         # Save to a temporary CSV file
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.csv')
         result_df.to_csv(temp_file.name, index=False)
-        
+
         logging.info(f"Regex generation complete for column: {column}")
         return render_template(
             'results.html',
             patterns=result_df.to_html(classes='table table-striped'),
             download_file=temp_file.name
         )
-    
+
     return "Invalid file format. Please upload a CSV file."
 
 def tokenize(text):
     """Tokenize the input text using regex to split into words, numbers, and symbols."""
-    return re.findall(r'\S+', text)  # Splitting by whitespace while keeping non-whitespace parts
+    regex_pattern = r'\S+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\b\w+\.[a-zA-Z]{2,}\b|(?:[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})|(?:\+?[0-9]{1,4}[\\s-]?[0-9]{1,15})|\\d{4}-\\d{2}-\\d{2}|\\d{2}:\\d{2}:\\d{2}|0x[0-9A-Fa-f]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
+    return re.findall(regex_pattern, text)  # Find appropriate tokens
 
 def detect_patterns(tokens):
     """Analyze tokens to detect patterns based on their structure."""
     patterns = defaultdict(int)
-    length_counts = defaultdict(int)
 
     for token in tokens:
+        # Check for numbers
         if token.isdigit():
-            patterns['digit'] += 1
-            patterns['<DIGIT>'] = True
+            patterns['numeric'] += 1
+        # Check for alphabetic strings
         elif token.isalpha():
             patterns['alpha'] += 1
-            patterns['<ALPHA>'] = True
-        elif re.search(r'\W', token):
-            patterns['special'] += 1
-            patterns['<SPECIAL>'] = True
+        # Check for decimal numbers (floating-point numbers)
+        elif re.match(r'^\d+\.\d+$', token):
+            patterns['float'] += 1
+        # Check for emails
+        elif re.match(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', token):
+            patterns['email'] += 1
+        # Check for URLs
+        elif re.match(r'https?://[^\s/$.?#].[^\s]*', token):
+            patterns['url'] += 1
+        # Check for date formats (yyyy-mm-dd)
+        elif re.match(r'\d{4}-\d{2}-\d{2}', token):
+            patterns['date'] += 1
+        # Check for time formats (hh:mm:ss)
+        elif re.match(r'\d{2}:\d{2}:\d{2}', token):
+            patterns['time'] += 1
+        # Check for hexadecimal numbers
+        elif re.match(r'0x[0-9A-Fa-f]+', token):
+            patterns['hex'] += 1
+        # Check for IP addresses
+        elif re.match(r'\d{1,3}(\.\d{1,3}){3}', token):
+            patterns['ipv4'] += 1
+        # Check for UUIDs
+        elif re.match(r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', token):
+            patterns['uuid'] += 1
         else:
-            patterns['mixed'] += 1
-            patterns['<MIXED>'] = True
-            
-        # Count lengths
-        length_counts[len(token)] += 1
+            patterns['other'] += 1
 
-    patterns['length_counts'] = length_counts  # Adding length counts to patterns
+        # Dynamic count for digits within the text
+        digit_count = sum(c.isdigit() for c in token)
+        if digit_count > 0:
+            patterns['digit'] += digit_count
+
     return patterns
 
 def generate_regex_from_patterns(patterns):
-    """Construct a regex pattern from detected token patterns."""
-    
-    # Collect sections for regex construction
+    """Generate regex dynamically based on detected patterns."""
     regex_sections = []
-    
-    # Adding basic type patterns
-    if patterns.get('digit', 0):
-        regex_sections.append(r'\d+')
-    if patterns.get('alpha', 0):
-        regex_sections.append(r'[A-Za-z]+')
-    if patterns.get('special', 0):
-        regex_sections.append(r'[\W]+')
 
-    # Add dynamic lengths for specific counts
-    for length, count in sorted(patterns['length_counts'].items()):
-        if length > 0:
-            regex_sections.append(r'.{%d}' % length)  # Match any sequence of that length
-    
-    # Combine the sections dynamically
-    if regex_sections:
-        combined_pattern = '|'.join(regex_sections)
-        return rf'({combined_pattern})*'
-    
-    return r'.*'  # Fallback if no patterns were found
+    # For each pattern type detected, generate a corresponding regex
+    if patterns.get('numeric', 0) > 0:
+        regex_sections.append(r'\d+')  # Match numeric values
+    if patterns.get('alpha', 0) > 0:
+        regex_sections.append(r'[a-zA-Z]+')  # Match alphabetic strings
+    if patterns.get('float', 0) > 0:
+        regex_sections.append(r'\d+\.\d+')  # Match floating-point numbers
+    if patterns.get('email', 0) > 0:
+        regex_sections.append(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')  # Email format
+    if patterns.get('url', 0) > 0:
+        regex_sections.append(r'https?://[^\s/$.?#].[^\s]*')  # URL format
+    if patterns.get('date', 0) > 0:
+        regex_sections.append(r'\d{4}-\d{2}-\d{2}')  # Date format
+    if patterns.get('time', 0) > 0:
+        regex_sections.append(r'\d{2}:\d{2}:\d{2}')  # Time format
+    if patterns.get('hex', 0) > 0:
+        regex_sections.append(r'0x[0-9A-Fa-f]+')  # Hexadecimal format
+    if patterns.get('ipv4', 0) > 0:
+        regex_sections.append(r'\d{1,3}(\.\d{1,3}){3}')  # IPv4 address
+    if patterns.get('uuid', 0) > 0:
+        regex_sections.append(r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}')  # UUID format
+    if patterns.get('digit', 0) > 0:
+        regex_sections.append(r'\d+')  # Match digit patterns (specific count)
 
-@app.route('/download/<path:filename>', methods=['GET'])
-def download_file(filename):
-    """Serve the generated CSV file for download."""
-    return send_file(filename, as_attachment=True)
+    # Add other pattern as fallback
+    if patterns.get('other', 0) > 0:
+        regex_sections.append(r'\S+')  # Match any other string
+
+    # Combine all regex sections using alternation (|), simulating dynamic pattern matching
+    return '|'.join(regex_sections)
 
 if __name__ == '__main__':
     app.run(debug=True)
