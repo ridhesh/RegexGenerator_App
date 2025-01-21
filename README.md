@@ -1,0 +1,1 @@
+In this project, you can use regular expressions to validate user inputs in web forms (such as email addresses, phone numbers, or product codes) and clean up data before processing it. This is a useful project for ensuring that data collected on websites is in the correct format.
